@@ -1,0 +1,2 @@
+# SO
+laboratorio sistemi operatori
