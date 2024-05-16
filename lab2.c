@@ -7,6 +7,7 @@
 #include <string.h>
 
 
+// prova
 void ric(const char *arg) {
 
     struct dirent* dirp;
