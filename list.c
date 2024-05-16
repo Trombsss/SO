@@ -5,15 +5,52 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
+#include <pwd.h>   
+#include <grp.h> 
 
 
-// prova
-void ric(const char *arg) {
+void info(struct stat buf) {
+struct passwd *pwd;
+struct group *grp;
+
+    pwd = getpwuid(buf.st_uid);
+    grp = getgrgid(buf.st_gid);
+
+    //int bytes = buf.st_size/8;
+
+    printf("\tInode: %d\n", buf.st_ino);
+    if(S_ISREG(buf.st_mode))
+        printf("\tType: file\n");
+    else if(S_ISDIR(buf.st_mode))
+        printf("\tType: directory\n");
+    else if(S_ISLNK(buf.st_mode))
+        printf("\tType: symbolic link\n");
+    else if(S_ISFIFO(buf.st_mode))
+        printf("\tType: FIFO\n");
+    else 
+        printf("\tType: other\n");
+    printf("\tSize: %d\n", buf.st_size);
+    printf("\tOwner: %d %s\n", buf.st_uid, pwd->pw_name);
+    printf("\tGroup: %d %s\n", buf.st_gid, grp->gr_name);        
+}
+
+void ric(char *arg, int c) {
 
     struct dirent* dirp;
     struct stat buf;
     // viene aperta la cartella e restituisce un puntatore di tipo DIR *
     DIR *d = opendir(arg);
+
+    if (c==0 && stat(arg, &buf) == 0) {
+        printf("Node: %s\n", arg);
+        info(buf);
+    } else if(stat(arg, &buf) < 0){
+        perror("stat");
+        closedir(d);
+        return;
+    }
+
+    c++;
 
     // apro la dir e inizio il ciclo while 
     while ((dirp = readdir(d)) != NULL) {
@@ -32,11 +69,12 @@ void ric(const char *arg) {
             continue;
         }
 
-        printf("%s\n", path);
+        printf("Node: %s\n", path);
+        info(buf);
             
         // se e una directory entro nella funzione path
         if(S_ISDIR(buf.st_mode))
-            ric(path);
+            ric(path,c);
     }
 
     closedir(d);
@@ -45,10 +83,11 @@ void ric(const char *arg) {
 
 int main(int argc, char * argv[]) {
     
+    int c=0;
     if(argc!=2)
         return 1;
 
-    ric(argv[1]);
+    ric(argv[1],c);
    
 return 0;
 
